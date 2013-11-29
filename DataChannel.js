@@ -2,8 +2,8 @@ var RTCPeerConnection = RTCPeerConnection || webkitRTCPeerConnection || mozRTCPe
 var RTCSessionDescription = RTCSessionDescription || webkitRTCSessionDescription || mozRTCSessionDescription;
 var RTCIceCandidate = RTCIceCandidate || webkitRTCIceCandidate || mozRTCIceCandiate;
 var mediaConstraints = {'mandatory': {
-  'OfferToReceiveAudio':false,
-  'OfferToReceiveVideo':false 
+  'OfferToReceiveAudio':true,
+  'OfferToReceiveVideo':true
 }};
 
 var pc_config = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
@@ -25,8 +25,8 @@ var DataChannel = function(processConnection, myId, receiverId) {
     that.pc = processConnection;                         //handle process connection of web rtc    
     that.senderId =  myId;
     that.id = receiverId;
-    that.localDataChannels = [];
-    EventTarget.call(this);
+    that.localDataChannels = {};
+    EventTarget.call(that);
 };
 
 DataChannel.prototype = new EventTarget();
@@ -63,7 +63,7 @@ var createPeerConnection = function() {
     that.pc.onconnecting = onSessionConnecting.bind(that)();
     that.pc.onopen = onSessionOpened.bind(that)();
     var commandDataChannel  = createDataChannel.bind(that)('command');
-    that.localDataChannels.command = that.commandDataChannel;
+    that.localDataChannels.command = commandDataChannel;
     that.bindEventToDataChannel(commandDataChannel);
         
 };    
@@ -71,20 +71,16 @@ var createPeerConnection = function() {
 var createDataChannel = function(dataChannelName) {
     var that = this;
     var localDataChannel = that.pc.createDataChannel(dataChannelName, {
-        reliable: false
+        reliable: true
     });
     return localDataChannel;
 };
 
-
-//setLocalAndSendMessage(that)
-
 var setLocalAndSendMessage = function(description)  {
     var that = this;
-    console.log('media description:' + description);
-        //description.sdp = preferOpus(description.sdp);
+    description.sdp = description.sdp.replace(/a=msid-semantic/g,"a=xmsid-semantic");
+    description.sdp = description.sdp.replace(/a=ssrc/g,"a=xssrc");
     that.pc.setLocalDescription(description);
-       // pc.ondatachannel = onDataChannel;
     sendMessage.bind(that)(description);
 };    
 
@@ -150,8 +146,8 @@ var sendCommand = function(message) {
     var that = this;
     var localDataChannel = that.localDataChannels.command;
     if(!localDataChannel) {
-        that.createDataChannel('command');
-        localDataChannel = that.localDataChannels.command;
+        localDataChannel = createDataChannel.bind(that)('command');
+        that.localDataChannels.command = localDataChannel;
     }
     sendDataOverDataChannel(localDataChannel, message);
 };
@@ -227,7 +223,7 @@ DataChannel.prototype.removeListener = function(type, listener){
                 }
             }
         }
-};    
+    };
    
     
 /*
@@ -261,8 +257,6 @@ DataChannel.prototype.sendData = function(message) {
 DataChannel.prototype.createDataChannelFromName = function(name) {
     return this.createDataChannel(name);
 };
-
-
 
 
 /*
