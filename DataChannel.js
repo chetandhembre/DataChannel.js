@@ -2,8 +2,8 @@ var RTCPeerConnection = RTCPeerConnection || webkitRTCPeerConnection || mozRTCPe
 var RTCSessionDescription = RTCSessionDescription || webkitRTCSessionDescription || mozRTCSessionDescription;
 var RTCIceCandidate = RTCIceCandidate || webkitRTCIceCandidate || mozRTCIceCandiate;
 var mediaConstraints = {'mandatory': {
-  'OfferToReceiveAudio':true,
-  'OfferToReceiveVideo':true
+  'OfferToReceiveAudio':false,
+  'OfferToReceiveVideo':false
 }};
 
 var pc_config = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
@@ -54,7 +54,7 @@ var createPeerConnection = function() {
     var that = this;
     try {
         that.pc = new RTCPeerConnection(pc_config, con);
-        that.pc.onicecandidate = onIceCandidate.bind(that)();
+        that.pc.onicecandidate = onIceCandidate.bind(that);
         console.log('create peer connection');
     } catch(e) {
         console.log('error while creating peer connection with ice');    
@@ -78,9 +78,9 @@ var createDataChannel = function(dataChannelName) {
 
 var setLocalAndSendMessage = function(description)  {
     var that = this;
-    description.sdp = description.sdp.replace(/a=msid-semantic/g,"a=xmsid-semantic");
+ /*   description.sdp = description.sdp.replace(/a=msid-semantic/g,"a=xmsid-semantic");
     description.sdp = description.sdp.replace(/a=ssrc/g,"a=xssrc");
-    that.pc.setLocalDescription(description);
+ */   that.pc.setLocalDescription(description);
     sendMessage.bind(that)(description);
 };    
 
@@ -102,7 +102,7 @@ var onIceCandidate = function(event) {
     var that = this;
     if (event.candidate) {
         console.log('condidate is created!!!');
-        that.sendMessage({
+        sendMessage.bind(that)({
                 type: 'candidate',
                 label: event.candidate.sdpMLineIndex,
                 id: event.candidate.sdpMid,
@@ -124,11 +124,11 @@ var onSessionOpened = function(e) {
 
 DataChannel.prototype.bindEventToDataChannel = function(localDataChannel) {
     var that = this;
-    localDataChannel.onopen = function() {
+    localDataChannel.onopen = function(e) {
             console.log('data channel open');
         };
         
-    localDataChannel.onclose = function() {
+    localDataChannel.onclose = function(e) {
         console.log('data channel close');
     };
         
