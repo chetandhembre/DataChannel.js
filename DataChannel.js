@@ -3,7 +3,7 @@ var RTCSessionDescription = RTCSessionDescription || webkitRTCSessionDescription
 var RTCIceCandidate = RTCIceCandidate || webkitRTCIceCandidate || mozRTCIceCandiate;
 var mediaConstraints = {'mandatory': {
   'OfferToReceiveAudio':false,
-  'OfferToReceiveVideo':false
+  'OfferToReceiveVideo':false 
 }};
 
 var pc_config = {"iceServers": [{"url": "stun:stun.l.google.com:19302"}]};
@@ -149,7 +149,7 @@ var sendCommand = function(message) {
         localDataChannel = createDataChannel.bind(that)('command');
         that.localDataChannels.command = localDataChannel;
     }
-    sendDataOverDataChannel(localDataChannel, message);
+    sendDataOverDataChannel.bind(that)(localDataChannel, message);
 };
 
 /*
@@ -223,7 +223,7 @@ DataChannel.prototype.removeListener = function(type, listener){
                 }
             }
         }
-    };
+    };    
    
     
 /*
